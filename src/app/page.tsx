@@ -1,101 +1,81 @@
-import Image from "next/image";
+"use client"
+import { Form, InputNumber, Button, Typography, Input } from "antd";
+import 'antd/dist/reset.css';
+import ILicenseSetup from "@/types/LicenseSetup";
+import CryptoJS from "crypto-js";
+
+const AES_KEY = "exlIptwPhJOivnYuXiEZT5duSbEpfBuB"; // 32 ký tự
+const AES_IV = "tkZ5nEqxNKJlvGxQ"; // 16 ký tự
+
+const { Title } = Typography;
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [form] = Form.useForm<ILicenseSetup>();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const onFinish = (values: ILicenseSetup) => {
+    // Lấy dữ liệu license
+    const licenseData = { concurrentAccount: values.concurrentAccount };
+    // Hardcode key và iv
+    const keyWordArray = CryptoJS.enc.Utf8.parse(AES_KEY);
+    const ivWordArray = CryptoJS.enc.Utf8.parse(AES_IV);
+    // Chuỗi hóa dữ liệu
+    const dataString = JSON.stringify(licenseData);
+    // Mã hóa AES
+    const encrypted = CryptoJS.AES.encrypt(dataString, keyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    }).toString();
+    // Tạo file .lic và download
+    const blob = new Blob([encrypted], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${values.name}.lic`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="font-sans grid grid-rows-[20px_1fr_20px] justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <Title>Tool Tạo File License</Title>
+
+      {/* <Card style={{width: "100%", maxWidth: "500px", height: ""}}> */}
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          initialValues={{ concurrentAccount: 1, name: "" }}
+          style={{width: "100%", maxWidth: "500px", border: "1px solid rgb(217 217 217)", padding: "15px", borderRadius: '6px', height: "fit-content"}}
+        >
+          <Form.Item
+            label="Tên đơn vị"
+            name="name"
+            rules={[
+              { required: true, message: 'Vui lòng nhập tên đơn vị!' },
+            ]}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <Input style={{ width: '100%' }} placeholder="Vui lòng nhập tên đơn vị"/>
+          </Form.Item>
+          <Form.Item
+            label="Số người dùng truy cập tối đa"
+            name="concurrentAccount"
+            rules={[
+              { required: true, message: 'Vui lòng nhập số người dùng truy cập tối đa!' },
+              { type: 'number', min: 1, message: 'Phải lớn hơn 0!' },
+            ]}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item style={{display: 'flex', justifyContent: 'end'}}>
+            <Button type="primary" htmlType="submit">
+              Tạo License
+            </Button>
+          </Form.Item>
+        </Form>
+      {/* </Card> */}
     </div>
   );
 }
